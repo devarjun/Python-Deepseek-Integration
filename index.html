@@ -3,140 +3,679 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lucario AI</title>
+    <title>LucarioAI Chat</title>
     <style>
+        :root {
+            --primary-color: #128C7E;
+            --secondary-color: #075E54;
+            --light-color: #DCF8C6;
+            --user-bubble: #DCF8C6;
+            --ai-bubble: #FFFFFF;
+            --background-color: #E5DDD5;
+            --border-color: #d4d4d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
+            background-color: #f0f0f0;
+            height: 100vh;
+            overflow: hidden;
         }
-        .search-container {
-            margin-bottom: 20px;
+
+        .app-container {
             display: flex;
-            gap: 10px;
+            height: 100vh;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
-        .search-input {
-            padding: 12px;
-            flex-grow: 1;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
         }
-        .search-button {
-            padding: 12px 24px;
-            font-size: 16px;
-            background-color: #0066cc;
+
+        .sidebar-header {
+            padding: 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .conversation-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .conversation-item.active {
+            background-color: #e9f7ef;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .conversation-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .conversation-info {
+            flex: 1;
+        }
+
+        .conversation-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .conversation-preview {
+            font-size: 0.8rem;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        .conversation-time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-button {
+            padding: 8px 12px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            white-space: nowrap;
+            font-size: 0.9rem;
+            flex: 1;
+            margin: 0 5px;
         }
-        .search-button:hover {
-            background-color: #0052a3;
+
+        .action-button:hover {
+            background-color: var(--secondary-color);
         }
-        .results-container {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 25px;
-            min-height: 300px;
-            margin-top: 20px;
-            background-color: #f9f9f9;
+
+        .action-button.danger {
+            background-color: #e74c3c;
         }
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #0066cc;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 2s linear infinite;
-            display: none;
-            margin: 20px auto;
+
+        .action-button.danger:hover {
+            background-color: #c0392b;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .results-text {
-            white-space: pre-wrap;
-            font-size: 15px;
-        }
-        .header {
+
+        /* Main Chat Area */
+        .chat-container {
+            flex: 1;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            background-color: var(--background-color);
+        }
+
+        .chat-header {
+            padding: 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
             align-items: center;
-            margin-bottom: 30px;
+            justify-content: space-between;
         }
-        .title {
-            margin: 0;
-            color: #333;
+
+        .chat-title {
+            display: flex;
+            align-items: center;
         }
-        .subtitle {
-            margin: 5px 0 0 0;
-            color: #666;
-            font-weight: normal;
-            font-size: 16px;
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .chat-name {
+            font-weight: bold;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .chat-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .conversation-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+CiAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2U1ZGRkNSIgLz4KICA8ZyBmaWxsPSIjZDJjYmNhIiBmaWxsLW9wYWNpdHk9IjAuMyI+CiAgICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIzIiAvPgogICAgPGNpcmNsZSBjeD0iNzUiIGN5PSIyNSIgcj0iMyIgLz4KICAgIDxjaXJjbGUgY3g9IjEyNSIgY3k9IjI1IiByPSIzIiAvPgogICAgPGNpcmNsZSBjeD0iMTc1IiBjeT0iMjUiIHI9IjMiIC8+CiAgICAKICAgIDxjaXJjbGUgY3g9IjI1IiBjeT0iNzUiIHI9IjMiIC8+CiAgICA8Y2lyY2xlIGN4PSI3NSIgY3k9Ijc1IiByPSIzIiAvPgogICAgPGNpcmNsZSBjeD0iMTI1IiBjeT0iNzUiIHI9IjMiIC8+CiAgICA8Y2lyY2xlIGN4PSIxNzUiIGN5PSI3NSIgcj0iMyIgLz4KICAgIAogICAgPGNpcmNsZSBjeD0iMjUiIGN5PSIxMjUiIHI9IjMiIC8+CiAgICA8Y2lyY2xlIGN4PSI3NSIgY3k9IjEyNSIgcj0iMyIgLz4KICAgIDxjaXJjbGUgY3g9IjEyNSIgY3k9IjEyNSIgcj0iMyIgLz4KICAgIDxjaXJjbGUgY3g9IjE3NSIgY3k9IjEyNSIgcj0iMyIgLz4KICAgIAogICAgPGNpcmNsZSBjeD0iMjUiIGN5PSIxNzUiIHI9IjMiIC8+CiAgICA8Y2lyY2xlIGN4PSI3NSIgY3k9IjE3NSIgcj0iMyIgLz4KICAgIDxjaXJjbGUgY3g9IjEyNSIgY3k9IjE3NSIgcj0iMyIgLz4KICAgIDxjaXJjbGUgY3g9IjE3NSIgY3k9IjE3NSIgcj0iMyIgLz4KICA8L2c+Cjwvc3ZnPg==');
+            background-repeat: repeat;
+        }
+
+        .date-divider {
+            text-align: center;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .date-divider span {
+            background-color: rgba(225, 245, 254, 0.8);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message p {
+            margin-bottom: 5px;
+        }
+
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-bubble);
+            margin-left: auto;
+            border-bottom-right-radius: 3px;
+        }
+
+        .user-message::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: -8px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid var(--user-bubble);
+            border-right: 8px solid transparent;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid var(--user-bubble);
+        }
+
+        .assistant-message {
+            align-self: flex-start;
+            background-color: var(--ai-bubble);
+            margin-right: auto;
+            border-bottom-left-radius: 3px;
+        }
+
+        .assistant-message::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border-right: 8px solid var(--ai-bubble);
+            border-left: 8px solid transparent;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid var(--ai-bubble);
+        }
+
+        .message-time {
+            font-size: 0.65rem;
+            color: #999;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .input-container {
+            padding: 15px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .send-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .loader {
+            align-self: center;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #888;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .empty-state-text {
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 60px;
+                flex-direction: row;
+            }
+
+            .sidebar-header {
+                width: 200px;
+            }
+
+            .conversations-list {
+                display: flex;
+                overflow-x: auto;
+                height: 60px;
+            }
+
+            .conversation-item {
+                min-width: 200px;
+                height: 60px;
+                border-right: 1px solid var(--border-color);
+                border-bottom: none;
+            }
+
+            .chat-container {
+                height: calc(100vh - 60px);
+            }
+        }
+
+        /* Toggle sidebar button for mobile */
+        .toggle-sidebar {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .sidebar {
+                position: absolute;
+                left: -300px;
+                top: 0;
+                height: 100%;
+                z-index: 10;
+                transition: left 0.3s;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .toggle-sidebar {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <h1 class="title">LucarioAI</h1>
-            <h3 class="subtitle">Ask anything about Performance testing, Performance engineering, SREs</h3>
+    <div class="app-container">
+        <!-- Sidebar with conversation history -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">LucarioAI Chat</div>
+            </div>
+            <div class="conversations-list" id="conversationsList">
+                <!-- Conversation items will be added here -->
+            </div>
+            <div class="sidebar-footer">
+                <button id="newChatButton" class="action-button">New Chat</button>
+                <button id="clearCacheButton" class="action-button danger">Clear Cache</button>
+            </div>
         </div>
-    </div>
-    
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Enter your question...">
-        <button id="searchButton" class="search-button">Ask Lucario</button>
-    </div>
-    
-    <div class="results-container">
-        <h2>Response</h2>
-        <div id="loader" class="loader"></div>
-        <div id="results" class="results-text"></div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <button class="toggle-sidebar" id="toggleSidebar">☰</button>
+                <div class="chat-title">
+                    <div class="chat-avatar">L</div>
+                    <div>
+                        <div class="chat-name">LucarioAI</div>
+                        <div id="conversationId" style="font-size: 0.8rem; opacity: 0.8;"></div>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <span class="chat-icon" id="refreshButton">🔄</span>
+                </div>
+            </div>
+
+            <div class="conversation-container" id="conversationContainer">
+                <!-- Empty state when no conversation -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">💬</div>
+                    <h2>Welcome to LucarioAI</h2>
+                    <p class="empty-state-text">
+                        Ask anything about Performance Testing, Performance Engineering, or Site Reliability Engineering.
+                    </p>
+                </div>
+
+                <!-- Messages will be added here -->
+                <div class="loader" id="loader">
+                    <div class="loading-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <input type="text" id="messageInput" class="message-input" placeholder="Type a message...">
+                <button id="sendButton" class="send-button">➤</button>
+            </div>
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const searchButton = document.getElementById('searchButton');
-            const results = document.getElementById('results');
+            // DOM elements
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const conversationContainer = document.getElementById('conversationContainer');
             const loader = document.getElementById('loader');
+            const newChatButton = document.getElementById('newChatButton');
+            const clearCacheButton = document.getElementById('clearCacheButton');
+            const conversationsList = document.getElementById('conversationsList');
+            const refreshButton = document.getElementById('refreshButton');
+            const emptyState = document.getElementById('emptyState');
+            const conversationIdDisplay = document.getElementById('conversationId');
+            const toggleSidebar = document.getElementById('toggleSidebar');
+            const sidebar = document.getElementById('sidebar');
             
-            // Also trigger search when Enter key is pressed
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    performSearch();
-                }
+            // State
+            let currentConversationId = null;
+            let conversations = {};
+            
+            // Toggle sidebar on mobile
+            toggleSidebar.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
             });
             
-            searchButton.addEventListener('click', performSearch);
+            // Load past conversations from localStorage
+            function loadConversations() {
+                const saved = localStorage.getItem('lucarioConversations');
+                if (saved) {
+                    conversations = JSON.parse(saved);
+                    renderConversationsList();
+                }
+            }
             
-            function performSearch() {
-                const searchTerm = searchInput.value.trim();
+            // Save conversations to localStorage
+            function saveConversations() {
+                localStorage.setItem('lucarioConversations', JSON.stringify(conversations));
+                renderConversationsList();
+            }
+            
+            // Render the list of past conversations
+            function renderConversationsList() {
+                conversationsList.innerHTML = '';
                 
-                if (searchTerm === '') {
-                    results.innerHTML = '<p>Please enter a question related to Performance Testing and Engineering.</p>';
+                Object.keys(conversations).forEach(id => {
+                    const convo = conversations[id];
+                    const lastMessage = convo.messages[convo.messages.length - 1];
+                    const preview = lastMessage.role === 'user' ? lastMessage.content : lastMessage.content.substring(0, 60) + '...';
+                    
+                    const item = document.createElement('div');
+                    item.className = `conversation-item ${id === currentConversationId ? 'active' : ''}`;
+                    item.dataset.id = id;
+                    
+                    const date = new Date(convo.timestamp);
+                    const formattedDate = date.toLocaleDateString();
+                    
+                    item.innerHTML = `
+                        <div class="conversation-avatar">L</div>
+                        <div class="conversation-info">
+                            <div class="conversation-name">Chat ${formattedDate}</div>
+                            <div class="conversation-preview">${preview}</div>
+                        </div>
+                        <div class="conversation-time">${formattedDate}</div>
+                    `;
+                    
+                    item.addEventListener('click', () => loadConversation(id));
+                    conversationsList.appendChild(item);
+                });
+            }
+            
+            // Load a specific conversation
+            function loadConversation(id) {
+                currentConversationId = id;
+                renderConversationsList(); // Update active state
+                
+                const convo = conversations[id];
+                if (!convo) return;
+                
+                conversationContainer.innerHTML = '';
+                emptyState.style.display = 'none';
+                conversationIdDisplay.textContent = `ID: ${id.substring(0, 8)}...`;
+                
+                // Add date divider
+                const date = new Date(convo.timestamp);
+                addDateDivider(date.toLocaleDateString());
+                
+                // Add all messages
+                convo.messages.forEach(msg => {
+                    if (msg.role !== 'system') {
+                        addMessage(msg.content, msg.role === 'user');
+                    }
+                });
+                
+                // Scroll to bottom
+                conversationContainer.scrollTop = conversationContainer.scrollHeight;
+            }
+            
+            // Add a date divider
+            function addDateDivider(dateText) {
+                const divider = document.createElement('div');
+                divider.className = 'date-divider';
+                divider.innerHTML = `<span>${dateText}</span>`;
+                conversationContainer.appendChild(divider);
+            }
+            
+            // Add a message to the conversation
+            function addMessage(content, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = isUser ? 'message user-message' : 'message assistant-message';
+                
+                const now = new Date();
+                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                messageDiv.innerHTML = `
+                    <div>${content.replace(/\n/g, '<br>')}</div>
+                    <div class="message-time">${time}</div>
+                `;
+                
+                conversationContainer.appendChild(messageDiv);
+                conversationContainer.scrollTop = conversationContainer.scrollHeight;
+                
+                // Hide empty state once messages exist
+                emptyState.style.display = 'none';
+            }
+            
+            // Start a new conversation
+            function startNewConversation() {
+                currentConversationId = null;
+                conversationContainer.innerHTML = '';
+                emptyState.style.display = 'flex';
+                conversationIdDisplay.textContent = '';
+                messageInput.value = '';
+                messageInput.focus();
+            }
+            
+            // Send a message
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                
+                if (message === '') {
+                    alert('Please enter a message.');
                     return;
                 }
                 
-                // Show loading indicator
-                loader.style.display = 'block';
-                results.innerHTML = '';
-                searchButton.disabled = true;
-                searchButton.textContent = 'Processing...';
+                // Add user message to the UI
+                addMessage(message, true);
                 
-                // Make API call to your Python backend
+                // Clear input
+                messageInput.value = '';
+                
+                // Show loading indicator
+                loader.style.display = 'flex';
+                
+                // If this is a new conversation, create a date divider
+                if (!currentConversationId) {
+                    const now = new Date();
+                    addDateDivider(now.toLocaleDateString());
+                }
+                
+                // Make API call to your backend
                 fetch('http://localhost:5000/search', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ query: searchTerm })
+                    body: JSON.stringify({ 
+                        query: message,
+                        conversationId: currentConversationId
+                    })
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -147,28 +686,93 @@
                 .then(data => {
                     // Hide loading indicator
                     loader.style.display = 'none';
-                    searchButton.disabled = false;
-                    searchButton.textContent = 'Ask Lucario';
                     
-                    // Display the results
+                    // Update conversation ID
+                    currentConversationId = data.conversationId;
+                    conversationIdDisplay.textContent = `ID: ${currentConversationId.substring(0, 8)}...`;
+                    
+                    // Display the assistant's response
                     if (data.results && data.results.length > 0) {
-                        results.innerHTML = data.results[0].replace(/\n/g, '<br>');
+                        addMessage(data.results[0], false);
+                        
+                        // Save conversation to local storage
+                        const convo = conversations[currentConversationId] || {
+                            timestamp: new Date().toISOString(),
+                            messages: []
+                        };
+                        
+                        // Add messages to conversation history
+                        if (data.conversationHistory) {
+                            convo.messages = data.conversationHistory;
+                        } else {
+                            // Fallback if history not provided
+                            convo.messages.push({ role: 'user', content: message });
+                            convo.messages.push({ role: 'assistant', content: data.results[0] });
+                        }
+                        
+                        conversations[currentConversationId] = convo;
+                        saveConversations();
                     } else {
-                        results.innerHTML = '<p>No response received.</p>';
+                        addMessage('No response received.', false);
                     }
                 })
                 .catch(error => {
                     // Hide loading indicator
                     loader.style.display = 'none';
-                    searchButton.disabled = false;
-                    searchButton.textContent = 'Ask Lucario';
                     
                     // Display error message
-                    results.innerHTML = `<p>Error: ${error.message}</p>
-                        <p>Make sure your Python backend is running on localhost:5000</p>`;
+                    addMessage(`Error: ${error.message}. Make sure your Python backend is running on localhost:5000`, false);
                     console.error('Error:', error);
                 });
             }
+            
+            // Clear cache
+            function clearCache() {
+                if (!confirm('Are you sure you want to clear all conversations? This cannot be undone.')) {
+                    return;
+                }
+                
+                fetch('http://localhost:5000/clear-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ conversationId: currentConversationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    // Clear local storage as well
+                    localStorage.removeItem('lucarioConversations');
+                    conversations = {};
+                    renderConversationsList();
+                    // Start a new conversation
+                    startNewConversation();
+                })
+                .catch(error => {
+                    console.error('Error clearing cache:', error);
+                    alert('Error clearing cache. See console for details.');
+                });
+            }
+            
+            // Event listeners
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            sendButton.addEventListener('click', sendMessage);
+            newChatButton.addEventListener('click', startNewConversation);
+            clearCacheButton.addEventListener('click', clearCache);
+            refreshButton.addEventListener('click', function() {
+                if (currentConversationId) {
+                    loadConversation(currentConversationId);
+                }
+            });
+            
+            // Initialize
+            loadConversations();
         });
     </script>
 </body>
